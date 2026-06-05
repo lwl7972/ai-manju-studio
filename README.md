@@ -171,31 +171,58 @@ ai-manju-studio/
 
 ### 发布新版本
 
-开发者通过 GitHub Releases 发布新版本：
+通过 Git tag 触发自动打包和发布：
 
 ```bash
 # 1. 修改 package.json 中的版本号
 # 例如："version": "0.1.1"
 
-# 2. 提交并推送
+# 2. 提交并打 tag
 git add package.json
 git commit -m "chore: bump version to 0.1.1"
-git push
+git tag v0.1.1
+git push origin v0.1.1
 
-# 3. 在 GitHub 上创建 Release
-# - 访问：https://github.com/lwl7972/ai-manju-studio/releases
-# - 点击 "Create a new release"
-# - 填写版本号（如 v0.1.1）和更新说明
-# - 上传打包产物或使用自动生成的包
+# 3. GitHub Actions 自动执行
+# - 在 Windows/macOS/Ubuntu 上打包
+# - 自动创建 GitHub Release
+# - 上传所有平台的安装包
 ```
 
-**打包产物格式要求：**
+**打包产物格式：**
 
-- **Windows**: `.exe` 安装文件或 `.zip` 便携版
-- **macOS**: `.dmg` 或 `.zip`
-- **Linux**: `.AppImage` 或 `.tar.gz`
+- **Windows**: `.exe` 安装程序
+- **macOS**: `.dmg` 安装文件
+- **Linux**: `.AppImage` 便携应用
 
 用户检测到更新后，会自动下载对应的安装包。
+
+## 手动打包
+
+### 本地打包（当前平台）
+
+```bash
+# 构建前端资源
+npm run build
+
+# 打包当前平台的 Electron 应用
+npm run electron:build
+```
+
+### 分平台打包
+
+```bash
+# Windows
+npm run electron:build:win
+
+# macOS
+npm run electron:build:mac
+
+# Linux
+npm run electron:build:linux
+```
+
+**注意**：在 Linux 环境打包 Windows/macOS 版本需要 Wine，推荐使用 GitHub Actions 自动打包。
 
 ## 常用命令
 
