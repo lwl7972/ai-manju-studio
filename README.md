@@ -9,6 +9,7 @@
 - **扣子 API 集成**：内置对接扣子平台.workflow API
 - **Mock 演示模式**：无 Token 时也可体验完整流程
 - **项目管理**：支持创建和管理多个漫剧项目
+- **自动更新**：检测新版本自动下载，提示重启安装
 
 ## 技术栈
 
@@ -156,6 +157,45 @@ ai-manju-studio/
 ├── tsconfig.json            # TypeScript 配置
 └── tsconfig.electron.json   # Electron TS 配置
 ```
+
+## 自动更新
+
+应用内置 GitHub 自动更新功能，基于 GitHub Releases 发布新版本。
+
+### 工作机制
+
+1. **自动检测**：应用启动后自动检查 GitHub 是否有新版本
+2. **手动检查**：点击右上角"检查更新"按钮
+3. **下载提示**：发现新版本自动下载，弹窗提示用户
+4. **重启安装**：下载完成后提示重启应用安装更新
+
+### 发布新版本
+
+开发者通过 GitHub Releases 发布新版本：
+
+```bash
+# 1. 修改 package.json 中的版本号
+# 例如："version": "0.1.1"
+
+# 2. 提交并推送
+git add package.json
+git commit -m "chore: bump version to 0.1.1"
+git push
+
+# 3. 在 GitHub 上创建 Release
+# - 访问：https://github.com/lwl7972/ai-manju-studio/releases
+# - 点击 "Create a new release"
+# - 填写版本号（如 v0.1.1）和更新说明
+# - 上传打包产物或使用自动生成的包
+```
+
+**打包产物格式要求：**
+
+- **Windows**: `.exe` 安装文件或 `.zip` 便携版
+- **macOS**: `.dmg` 或 `.zip`
+- **Linux**: `.AppImage` 或 `.tar.gz`
+
+用户检测到更新后，会自动下载对应的安装包。
 
 ## 常用命令
 

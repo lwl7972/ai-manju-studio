@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Home, FolderOpen, Settings as SettingsIcon } from 'lucide-react'
+import { UpdateChecker } from '@/components/UpdateChecker'
 
 export default function Navbar() {
   const location = useLocation()
@@ -39,7 +40,7 @@ export default function Navbar() {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">v0.1.0</span>
+            <UpdateChecker />
           </div>
         </div>
       </div>

@@ -1,10 +1,15 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { autoUpdater } from 'electron-updater'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 let mainWindow: BrowserWindow | null = null
+
+// 配置自动更新
+autoUpdater.autoDownload = true
+autoUpdater.autoInstallOnAppQuit = true
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -32,15 +37,77 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
+    
+    // 启动后检查更新
+    setTimeout(() => {
+      autoUpdater.checkForUpdates()
+    }, 1000)
   })
 
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  // 事件监听
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow?.webContents.send('update-available', {
+      version: app.getVersion()
+    })
+  })
 }
 
 app.whenReady().then(() => {
   createWindow()
+
+  // 更新日志事件
+  autoUpdater.on('logging-info', (info) => {
+    console.log('Updater:', info)
+    mainWindow?.webContents.send('update-log', { type: 'info', message: info })
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('Update error:', err)
+    mainWindow?.webContents.send('update-error', err)
+  })
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for updates...')
+    mainWindow?.webContents.send('update-checking', null)
+  })
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info.version)
+    mainWindow?.webContents.send('update-available', info)
+    dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: '发现新版本',
+      message: `发现新版本 ${info.version}，正在自动下载...`,
+      buttons: ['确定'],
+    })
+  })
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('Update not available')
+    mainWindow?.webContents.send('update-not-available', null)
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    console.log('Update downloaded:', info.version)
+    mainWindow?.webContents.send('update-downloaded', info)
+    dialog.showMessageBox(mainWindow!, {
+      type: 'question',
+      title: '更新已准备就绪',
+      message: `新版本 ${info.version} 已下载完成，是否现在重启安装？`,
+      buttons: ['稍后', '现在重启'],
+      defaultId: 1,
+    }).then((result) => {
+      if (result.response === 1) {
+        // 禁用此标志，这样应用就不会在退出后自动重新启动
+        app.isQuiting = true
+        autoUpdater.quitAndInstall()
+      }
+    })
+  })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -53,6 +120,17 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// IPC 处理器 - 手动检查更新
+ipcMain.handle('check-for-updates', () => {
+  return autoUpdater.checkForUpdates()
+})
+
+// IPC 处理器 - 重启并安装更新
+ipcMain.handle('quit-and-install', () => {
+  app.isQuiting = true
+  autoUpdater.quitAndInstall()
 })
 
 ipcMain.handle('coze:execute-workflow', async (event, params) => {

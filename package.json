@@ -14,21 +14,22 @@
     "electron:build": "electron-builder"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.5",
+    "@radix-ui/react-label": "^2.1.1",
+    "@radix-ui/react-progress": "^1.1.1",
+    "@radix-ui/react-scroll-area": "^1.2.2",
+    "@radix-ui/react-select": "^2.1.5",
+    "@radix-ui/react-slot": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.2",
+    "@radix-ui/react-tooltip": "^1.1.7",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "electron-updater": "^6.8.3",
+    "lucide-react": "^0.535.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.6.3",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^3.3.1",
-    "class-variance-authority": "^0.7.1",
-    "lucide-react": "^0.535.0",
-    "@radix-ui/react-tabs": "^1.1.2",
-    "@radix-ui/react-select": "^2.1.5",
-    "@radix-ui/react-dialog": "^1.1.5",
-    "@radix-ui/react-label": "^2.1.1",
-    "@radix-ui/react-slot": "^1.1.1",
-    "@radix-ui/react-progress": "^1.1.1",
-    "@radix-ui/react-scroll-area": "^1.2.2",
-    "@radix-ui/react-tooltip": "^1.1.7"
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -61,8 +62,15 @@
       "dist/**/*",
       "dist-electron/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "lwl7972",
+      "repo": "ai-manju-studio",
+      "releaseType": "release"
+    },
     "mac": {
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "target": "dmg"
     },
     "win": {
       "target": "nsis"
