@@ -78,7 +78,7 @@ export interface ElectronAPI {
   onUpdateAvailable: (callback: (info: UpdateInfo) => void) => void
   onUpdateNotAvailable: (callback: () => void) => void
   onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => void
-  onUpdateError: (callback: (error: Error) => void) => void
+  onUpdateError: (callback: (error: string) => void) => void
   onUpdateLog: (callback: (info: { type: string; message: string }) => void) => void
 }
 

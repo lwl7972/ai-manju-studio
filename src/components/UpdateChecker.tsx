@@ -44,7 +44,7 @@ export function UpdateChecker() {
 
     window.electronAPI.onUpdateError((error) => {
       setChecking(false)
-      setUpdateError(error.message)
+      setUpdateError(error)
     })
   }, [])
 

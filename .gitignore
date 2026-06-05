@@ -47,6 +47,10 @@
 **/.pnpm-store/
 **/*.tsbuild*
 
+# Electron
+**/dist-electron/
+**/release/
+
 # Python
 **/__pycache__/
 *.py[cod]

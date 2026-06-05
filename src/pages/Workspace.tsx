@@ -319,11 +319,6 @@ export default function Workspace() {
                   <div className="flex-1">
                     <h3 className="font-medium text-sm">{stage.label}</h3>
                     <p className="text-xs text-muted-foreground">{stage.description}</p>
-                    {status && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {status.modelName && `使用：${status.modelName}`}
-                      </p>
-                    )}
                   </div>
                 </CardContent>
               </Card>

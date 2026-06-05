@@ -60,14 +60,9 @@ app.whenReady().then(() => {
   createWindow()
 
   // 更新日志事件
-  autoUpdater.on('logging-info', (info) => {
-    console.log('Updater:', info)
-    mainWindow?.webContents.send('update-log', { type: 'info', message: info })
-  })
-
   autoUpdater.on('error', (err) => {
     console.error('Update error:', err)
-    mainWindow?.webContents.send('update-error', err)
+    mainWindow?.webContents.send('update-error', err.message)
   })
 
   autoUpdater.on('checking-for-update', () => {
@@ -102,8 +97,6 @@ app.whenReady().then(() => {
       defaultId: 1,
     }).then((result) => {
       if (result.response === 1) {
-        // 禁用此标志，这样应用就不会在退出后自动重新启动
-        app.isQuiting = true
         autoUpdater.quitAndInstall()
       }
     })
@@ -129,7 +122,7 @@ ipcMain.handle('check-for-updates', () => {
 
 // IPC 处理器 - 重启并安装更新
 ipcMain.handle('quit-and-install', () => {
-  app.isQuiting = true
+  ;(app as any).isQuiting = true
   autoUpdater.quitAndInstall()
 })
 
