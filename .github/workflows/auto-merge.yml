@@ -1,0 +1,42 @@
+name: Auto Merge to Main
+
+on:
+  push:
+    branches:
+      - '260605-feat-ai-manju-studio'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Checkout main branch
+        run: git checkout main
+
+      - name: Merge feature branch
+        run: |
+          git merge origin/260605-feat-ai-manju-studio --no-ff -m "Auto-merge: 260605-feat-ai-manju-studio into main
+          
+          Merged by GitHub Actions on branch push.
+          
+          Commit: ${{ github.sha }}"
+        continue-on-error: true
+
+      - name: Push to main
+        run: git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

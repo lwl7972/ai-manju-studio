@@ -1,0 +1,149 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  version-check:
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.version.outputs.version }}
+      has_changes: ${{ steps.changes.outputs.has_changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check if version changed
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Check for code changes
+        id: changes
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -q 'src/'; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if tag exists
+        id: tag
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  create-release:
+    needs: version-check
+    if: needs.version-check.outputs.has_changes == 'true' && needs.version-check.outputs.tag_exists == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo "## 🎉 新版本发布" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "### 📝 更新内容" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            git log --oneline --reverse | while read line; do echo "- $line" >> $GITHUB_OUTPUT; done
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo "## 🎉 新版本发布" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "### 📝 更新内容" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            git log --oneline --reverse $PREV_TAG..HEAD | while read line; do echo "- $line" >> $GITHUB_OUTPUT; done
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: AI 漫剧工作室 v${{ steps.version.outputs.version }}
+          body: ${{ steps.notes.outputs.notes }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-release:
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Build for ${{ matrix.os }}
+        run: npm run electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/*.exe
+            release/*.dmg
+            release/*.AppImage
+            release/*.app
+            release/*.deb
+            release/*.rpm
+            release/*.snap
+            release/latest*.yml
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
