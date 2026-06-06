@@ -136,8 +136,12 @@ export default function ScriptEditor() {
           <p className="text-muted-foreground">故事与分镜管理</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-prompt-template-manager'))}
+          >
+            <FileText className="h-4 w-4 mr-2" />
             系统提示词
           </Button>
           <Button variant="outline" size="sm">

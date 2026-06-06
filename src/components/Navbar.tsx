@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Home, FolderOpen, Settings as SettingsIcon, ArrowLeft, FileText, Save, Download, LogOut, User } from 'lucide-react'
 import { UpdateChecker } from '@/components/UpdateChecker'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PromptTemplateManager from '@/components/PromptTemplateManager'
 
 export default function Navbar() {
@@ -14,6 +14,19 @@ export default function Navbar() {
 
   const isInWorkspace = location.pathname.startsWith('/workspace')
   const isProjectDetail = isInWorkspace && location.pathname !== '/workspace' && location.pathname !== '/workspace/'
+
+  // 监听全局事件以打开提示词管理器
+  useEffect(() => {
+    const handleOpenTemplateManager = () => {
+      setShowTemplateManager(true)
+    }
+
+    window.addEventListener('open-prompt-template-manager', handleOpenTemplateManager)
+
+    return () => {
+      window.removeEventListener('open-prompt-template-manager', handleOpenTemplateManager)
+    }
+  }, [])
 
   const workflowSteps = [
     { path: '/workspace/video-settings', label: '视频设置', description: '全局参数配置' },
