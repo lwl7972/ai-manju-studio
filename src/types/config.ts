@@ -25,6 +25,23 @@ export interface AppConfig {
     endpoint?: string
     email?: string
   }
+  // 各厂商 API Key 配置
+  apiKeys: {
+    coze?: string
+    zhipu?: string
+    openai?: string
+    anthropic?: string
+    moonshot?: string
+    deepseek?: string
+    aliyun?: string
+    tencent?: string
+    baidu?: string
+    microsoft?: string
+    volcengine?: string
+    bytedance?: string
+    kuaishou?: string
+    iflytek?: string
+  }
   // 界面偏好
   uiPreferences: {
     theme?: 'light' | 'dark'
@@ -142,5 +159,6 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
     outlineGenerate: 'outline-generate.txt',
   },
   account: {},
+  apiKeys: {},
   uiPreferences: {},
 }
