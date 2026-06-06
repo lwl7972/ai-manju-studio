@@ -71,15 +71,32 @@
       "repo": "ai-manju-studio",
       "releaseType": "release"
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AI 漫剧工作室",
+      "installerIcon": "resources/app.ico",
+      "uninstallerIcon": "resources/app.ico",
+      "installerHeaderIcon": "resources/app.ico",
+      "license": "LICENSE",
+      "language": "2052"
+    },
+    "icon": "resources/app.ico",
     "mac": {
       "category": "public.app-category.productivity",
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "resources/app.icns"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "resources/app.ico"
     },
     "linux": {
-      "target": "AppImage"
+      "target": "AppImage",
+      "icon": "resources/app.png",
+      "category": "Utility"
     }
   }
 }
