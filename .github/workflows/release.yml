@@ -60,5 +60,9 @@ jobs:
             artifacts/release/*.dmg
             artifacts/release/*.AppImage
             artifacts/release/*.yml
+            artifacts/*.exe
+            artifacts/*.dmg
+            artifacts/*.AppImage
+            artifacts/*.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
