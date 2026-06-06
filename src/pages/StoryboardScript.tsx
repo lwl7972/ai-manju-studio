@@ -1,52 +1,99 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Download, Copy, Play, Loader2 } from 'lucide-react'
+import { getProject, getDefaultParams } from '@/services/configService'
+import { Episode } from '@/types/config'
+import { promptAssemblyEngine, PromptAssemblyInput } from '@/services/promptAssembly'
 
 export default function StoryboardScript() {
+  const [searchParams] = useSearchParams()
+  const projectId = searchParams.get('projectId')
+  
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null)
+  const [project, setProject] = useState<any>(null)
+  const [params, setParams] = useState({
+    style: '',
+    aspectRatio: '',
+    quality: '',
+    platform: '',
+    duration: 60,
+  })
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+
+  // 加载项目数据
+  useEffect(() => {
+    if (projectId) {
+      const loadedProject = getProject(projectId)
+      if (loadedProject) {
+        setProject(loadedProject)
+        
+        // 获取第一个未完成的分集或最后一个分集
+        const episodes = loadedProject.episodes || []
+        if (episodes.length > 0) {
+          const pending = episodes.find((ep: Episode) => ep.status === 'pending')
+          setSelectedEpisode(pending || episodes[episodes.length - 1])
+        }
+        
+        // 加载参数（项目覆盖 + 全局默认）
+        const defaultParams = getDefaultParams()
+        setParams({
+          style: loadedProject.paramsOverride?.style || defaultParams.style,
+          aspectRatio: loadedProject.paramsOverride?.aspectRatio || defaultParams.aspectRatio,
+          quality: loadedProject.paramsOverride?.quality || defaultParams.quality,
+          platform: loadedProject.paramsOverride?.platform || defaultParams.platform,
+          duration: loadedProject.paramsOverride?.duration || defaultParams.duration,
+        })
+      }
+    }
+  }, [projectId])
 
   const handleGeneratePrompt = async () => {
+    if (!selectedEpisode || !project) {
+      alert('请选择一个分集')
+      return
+    }
+
     setIsGenerating(true)
-    // TODO: 调用提示词拼装引擎
-    // 这里模拟生成结果
-    setTimeout(() => {
-      setPrompt(`【全局基础设定】
-@图 1【角色】林风（男，20 岁，坚毅冷静）
-@图 2【角色】苏清寒（女，22 岁，冰冷狠厉）
-@图 3【场景】九天封神台（古朴石台，九根巨大石柱，雷云翻滚）
-场景环境：@图 3 九天封神台，黄昏，雷云密布，压抑氛围
-光影色调：暗金色主调，闪电蓝光
 
-【视频基础参数】
-总时长：60 秒
-画面比例：16:9
-画风设定：3D 玄幻，4K 分辨率，精细细节，画面层次丰富，清晰度高，全程画风统一
+    try {
+      // 准备输入数据
+      const input: PromptAssemblyInput = {
+        projectName: project.title,
+        episodeTitle: selectedEpisode.title,
+        episodeNumber: selectedEpisode.episodeNumber,
+        style: params.style,
+        aspectRatio: params.aspectRatio,
+        quality: params.quality,
+        platform: params.platform,
+        duration: params.duration,
+        episodeContent: selectedEpisode.content || selectedEpisode.summary,
+        characters: project.assets?.characters || [],
+        scenes: project.assets?.scenes || [],
+        props: project.assets?.props || [],
+      }
 
-【分镜明细】
-0-4s：承接上镜：分镜 2 结尾 10 秒时，黑色长剑反射出林风绝望的脸庞，苏清寒持剑而立。【场景信息：九天封神台】缓慢推镜，聚焦在林风的面部，展现他眼中的难以置信与失望，金色泪水混合着血液滑落。[cut]
-4-7s：镜头反打，特写苏清寒冰冷的眼神与嘴角的冷笑，她缓缓举起长剑，黑色煞气在剑身上盘旋。[cut]
-7-10s：仰拍镜头，苏清寒高举长剑，天空中一道闪电划过，照亮她狰狞的侧脸，煞气冲天而起。[cut]
-
-【角色对话】
-4-7s [林风，痛苦颤抖]: "清寒……为什么？我待你如亲妹，你为何要背叛我？"[cut]
-
-【背景音效】
-0-4s：林风沙哑的呼吸声 [cut]
-4-7s：林风痛苦的质问声 [cut]
-7-10s：闪电划破天际的轰鸣声、长剑凝聚煞气的嗡鸣声 [cut]
-
-【附加约束】
-场景、色调、光影保持统一，细节丰富，特效自然不突兀，画面无水印、无崩坏，标准高质感玄幻漫剧，只生成人物对话声音，不生成背景音乐`)
+      // 调用提示词拼装引擎
+      const assembledPrompt = await promptAssemblyEngine.assemble(input)
+      
+      setPrompt(assembledPrompt)
+      setLastSaved(new Date())
+    } catch (error) {
+      console.error('生成提示词失败:', error)
+      alert('生成提示词失败')
+    } finally {
       setIsGenerating(false)
-    }, 1500)
+    }
   }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(prompt)
+    alert('已复制到剪贴板')
   }
 
   const handleExport = () => {
@@ -54,7 +101,7 @@ export default function StoryboardScript() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = '分镜提示词.txt'
+    a.download = `分镜提示词-${project?.title}-${selectedEpisode?.episodeNumber}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -64,7 +111,7 @@ export default function StoryboardScript() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">分镜脚本</h2>
-          <p className="text-muted-foreground">提示词编辑导出</p>
+          <p className="text-muted-foreground">提示词编辑与导出</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleCopy} disabled={!prompt}>
@@ -78,8 +125,37 @@ export default function StoryboardScript() {
         </div>
       </div>
 
+      {lastSaved && (
+        <div className="text-xs text-muted-foreground text-right">
+          已保存于 {lastSaved.toLocaleTimeString()}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1 space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>选择分集</CardTitle>
+              <CardDescription>要生成提示词的分集</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {project?.episodes?.length === 0 ? (
+                <p className="text-sm text-muted-foreground">暂无分集</p>
+              ) : (
+                project?.episodes?.map((ep: Episode) => (
+                  <Button
+                    key={ep.id}
+                    variant={selectedEpisode?.id === ep.id ? 'default' : 'ghost'}
+                    className="w-full justify-start text-sm"
+                    onClick={() => setSelectedEpisode(ep)}
+                  >
+                    第{ep.episodeNumber}集：{ep.title}
+                  </Button>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>当前项目参数</CardTitle>
@@ -88,23 +164,23 @@ export default function StoryboardScript() {
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">风格：</span>
-                <span>3D 玄幻</span>
+                <span>{params.style || '未设置'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">比例：</span>
-                <span>16:9</span>
+                <span>{params.aspectRatio || '未设置'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">质量：</span>
-                <span>高</span>
+                <span>{params.quality || '未设置'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">平台：</span>
-                <span>抖音</span>
+                <span>{params.platform || '未设置'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">时长：</span>
-                <span>60 秒</span>
+                <span>{params.duration}秒</span>
               </div>
             </CardContent>
           </Card>
@@ -115,15 +191,34 @@ export default function StoryboardScript() {
               <CardDescription>本分集使用的角色和场景</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
+              <div className="text-xs text-muted-foreground mb-2">角色：</div>
               <div className="flex flex-wrap gap-1">
-                <Badge variant="outline">林风</Badge>
-                <Badge variant="outline">苏清寒</Badge>
-                <Badge variant="outline">九天封神台</Badge>
+                {project?.assets?.characters?.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">暂无角色</span>
+                ) : (
+                  project?.assets?.characters?.map((c: any) => (
+                    <Badge key={c.id} variant="outline">{c.name}</Badge>
+                  ))
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground mt-2 mb-2">场景：</div>
+              <div className="flex flex-wrap gap-1">
+                {project?.assets?.scenes?.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">暂无场景</span>
+                ) : (
+                  project?.assets?.scenes?.map((s: any) => (
+                    <Badge key={s.id} variant="outline">{s.name}</Badge>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
 
-          <Button className="w-full" onClick={handleGeneratePrompt} disabled={isGenerating}>
+          <Button 
+            className="w-full" 
+            onClick={handleGeneratePrompt} 
+            disabled={isGenerating || !selectedEpisode}
+          >
             {isGenerating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             <Play className="h-4 w-4 mr-2" />
             生成提示词
@@ -145,7 +240,7 @@ export default function StoryboardScript() {
               <Textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder='点击"生成提示词"按钮，系统将自动组合系统提示词、项目参数、分集内容和资产信息，生成分镜提示词...'
+                placeholder='选择左侧的分集，然后点击"生成提示词"按钮，系统将自动组合系统提示词、项目参数、分集内容和资产信息，生成分镜提示词...'
                 className="min-h-[500px] font-mono text-sm"
                 readOnly={isGenerating}
               />
