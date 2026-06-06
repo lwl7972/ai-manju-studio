@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FolderOpen, Plus, MoreHorizontal, Clock, ArrowRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { createProject, loadProjects, Project } from '@/services/configService'
+import { createProject, loadProjects } from '@/services/configService'
+import { Project } from '@/types/config'
 
 export default function ProjectSelector() {
   const navigate = useNavigate()

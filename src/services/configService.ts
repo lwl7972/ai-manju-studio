@@ -1,4 +1,4 @@
-import { AppConfig, Project, DEFAULT_APP_CONFIG } from '@/types/config'
+import { AppConfig, Project, DEFAULT_APP_CONFIG, Episode, AssetCharacter, AssetScene, AssetProp, ExportRecord } from '@/types/config'
 
 const CONFIG_KEY = 'app_config'
 const PROJECTS_KEY = 'project_library'

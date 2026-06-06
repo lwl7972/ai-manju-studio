@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { RefreshCw, Download, CheckCircle, AlertCircle } from 'lucide-react'
+import type { ElectronAPI } from '@/types/electron'
 
 export function UpdateChecker() {
   const [checking, setChecking] = useState(false)
@@ -12,56 +13,65 @@ export function UpdateChecker() {
   const [updateError, setUpdateError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!window.electronAPI) return
+    const electronAPI = window.electronAPI as ElectronAPI | undefined
+    if (!electronAPI) return
 
-    const currentVer = (window as any).electronAPI?.version || '0.1.0'
+    const currentVer = electronAPI.version || '0.1.0'
     setCurrentVersion(currentVer)
 
     // 监听更新事件
-    window.electronAPI.onUpdateChecking(() => {
+    electronAPI.onUpdateChecking(() => {
       setChecking(true)
       setUpdateError(null)
     })
 
-    window.electronAPI.onUpdateAvailable((info) => {
+    electronAPI.onUpdateAvailable((info: any) => {
       setChecking(false)
       setUpdateAvailable(true)
       setNewVersion(info.version)
       setUpdateError(null)
     })
 
-    window.electronAPI.onUpdateNotAvailable(() => {
+    electronAPI.onUpdateNotAvailable(() => {
       setChecking(false)
       setUpdateAvailable(false)
       setUpdateError(null)
     })
 
-    window.electronAPI.onUpdateDownloaded((info) => {
+    electronAPI.onUpdateDownloaded((info: any) => {
       setChecking(false)
       setUpdateDownloaded(true)
       setNewVersion(info.version)
     })
 
-    window.electronAPI.onUpdateError((error) => {
+    electronAPI.onUpdateError((error: string) => {
       setChecking(false)
       setUpdateError(error)
     })
   }, [])
 
   const handleCheckUpdate = async () => {
-    if (!window.electronAPI) return
+    const electronAPI = window.electronAPI as ElectronAPI | undefined
+    if (!electronAPI) return
     setUpdateError(null)
     setUpdateDownloaded(false)
-    await window.electronAPI.checkForUpdates()
+    try {
+      await electronAPI.checkForUpdates()
+    } catch (err) {
+      console.error('Check update failed:', err)
+      setUpdateError('检查更新失败')
+    }
   }
 
   const handleRestart = () => {
-    if (!window.electronAPI) return
-    window.electronAPI.quitAndInstall()
+    const electronAPI = window.electronAPI as ElectronAPI | undefined
+    if (!electronAPI) return
+    electronAPI.quitAndInstall()
   }
 
   // 在非 Electron 环境中不显示
-  if (!window.electronAPI) {
+  const electronAPI = window.electronAPI as ElectronAPI | undefined
+  if (!electronAPI) {
     return null
   }
 

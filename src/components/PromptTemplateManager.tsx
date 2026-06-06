@@ -9,10 +9,12 @@ import {
   updateTemplate,
   restoreDefault,
   getAvailableVariables,
+} from '@/services/promptTemplateService'
+import {
   PromptTemplate,
   PromptTemplateType,
   PROMPT_TEMPLATE_TYPES,
-} from '@/services/promptTemplateService'
+} from '@/types/promptTemplates'
 
 interface PromptTemplateManagerProps {
   onClose: () => void

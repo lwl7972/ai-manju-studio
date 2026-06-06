@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+// 获取应用版本
+const { app } = require('@electron/remote') || { app: { getVersion: () => '0.1.0' } }
+
 contextBridge.exposeInMainWorld('electronAPI', {
+  // 应用版本
+  version: app ? app.getVersion() : '0.1.0',
+  
   // Coze API
   executeWorkflow: (params: { workflowId: string; parameters: Record<string, any>; token: string; isAsync?: boolean }) =>
     ipcRenderer.invoke('coze:execute-workflow', params),
@@ -26,5 +32,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   onUpdateError: (callback: (error: string) => void) => {
     ipcRenderer.on('update-error', (_, error) => callback(error))
+  },
+  
+  // 注意：onUpdateLog 在 Electron 主进程中未实现，暂时留空
+  onUpdateLog: (callback: (info: { type: string; message: string }) => void) => {
+    // 空实现，等待主进程添加对应事件
   },
 })
