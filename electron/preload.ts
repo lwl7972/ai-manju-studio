@@ -17,6 +17,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
   
+  // 导出功能
+  exportProject: (params: { projectId: string; data: any }) =>
+    ipcRenderer.invoke('export:project', params),
+  exportScript: (params: { projectId: string; episodeNumber: number; content: string }) =>
+    ipcRenderer.invoke('export:script', params),
+  exportStoryboards: (params: { projectId: string; data: any[] }) =>
+    ipcRenderer.invoke('export:storyboards', params),
+  exportAssets: (params: { projectId: string; data: any }) =>
+    ipcRenderer.invoke('export:assets', params),
+  
   // 更新事件监听
   onUpdateChecking: (callback: () => void) => {
     ipcRenderer.on('update-checking', callback)

@@ -8,6 +8,7 @@ import { FileText, Download, Copy, Play, Loader2 } from 'lucide-react'
 import { getProject, getDefaultParams } from '@/services/configService'
 import { Episode } from '@/types/config'
 import { promptAssemblyEngine, PromptAssemblyInput } from '@/services/promptAssembly'
+import type { ElectronAPI } from '@/types/electron'
 
 export default function StoryboardScript() {
   const [searchParams] = useSearchParams()
@@ -96,14 +97,30 @@ export default function StoryboardScript() {
     alert('已复制到剪贴板')
   }
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    // Web 端：直接下载文件
     const blob = new Blob([prompt], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `分镜提示词-${project?.title}-${selectedEpisode?.episodeNumber}.txt`
+    a.download = `分镜提示词 -${project?.title}-${selectedEpisode?.episodeNumber}.txt`
     a.click()
     URL.revokeObjectURL(url)
+    
+    // Electron 环境：同时保存到项目目录
+    if (window.electronAPI && projectId && selectedEpisode) {
+      try {
+        const result = await (window.electronAPI as ElectronAPI).exportStoryboards({
+          projectId,
+          data: [{ prompt }],
+        })
+        if (result.success) {
+          console.log('Storyboard exported to:', result.path)
+        }
+      } catch (error) {
+        console.error('Export failed:', error)
+      }
+    }
   }
 
   return (

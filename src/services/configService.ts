@@ -112,6 +112,31 @@ export function createProject(data: {
   return project
 }
 
+export function addExportToProject(project: Project, exportRecord: ExportRecord): void {
+  project.exports = project.exports || []
+  project.exports.push(exportRecord)
+  project.updatedAt = new Date().toISOString()
+  saveProject(project)
+}
+
+// ==================== Web 端导出 ====================
+
+export function exportToFile(
+  filename: string,
+  content: string,
+  type = 'text/plain'
+): void {
+  const blob = new Blob([content], { type })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 // ==================== 工具函数 ====================
 
 function mergeConfig<T extends Record<string, any>>(base: T, override: Partial<T>): T {
