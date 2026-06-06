@@ -1,6 +1,6 @@
 {
   "name": "ai-manju-studio",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI 漫剧工作室 - 从小说到视频的完整工作流",
   "main": "dist-electron/main.js",
   "type": "module",
